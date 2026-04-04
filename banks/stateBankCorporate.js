@@ -57,15 +57,19 @@ module.exports = async function stateBankCorporate(corporate) {
   try {
     console.log(STATE_BANK_URL);
     response = await axios.post(STATE_BANK_URL, postData, {
-      headers: { 'Content-Type': 'text/xml' },
-      timeout: 20000,
+      headers: {
+        'Content-Type': 'text/xml; charset=utf-8',
+        'SOAPAction': '"http://tempuri.org/AcntStatement"',
+      },
     });
-console.log(response.data)
+
 
   } catch (error) {
     const status = error?.response?.status;
     const statusText = error?.response?.statusText;
     const responseData = error?.response?.data;
+    console.log('[DEBUG] raw response body:', responseData);
+    console.log('[DEBUG] error message:', error.message);
     const body =
       typeof responseData === 'string' ? responseData : JSON.stringify(responseData || {});
 
@@ -89,6 +93,7 @@ console.log(response.data)
 
     throw new Error(message || 'State bank request failed');
   }
+  console.log(response, "response");
       const xml = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
   const errCode = extractTagValues(xml, 'ErrCode')[0] || null;
   const errDesc = extractTagValues(xml, 'ErrDesc')[0] || null;
