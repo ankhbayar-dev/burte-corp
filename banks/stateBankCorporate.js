@@ -2,7 +2,7 @@ const axios = require('axios');
 const statementPostDataXML = require('../utils/statementPostDataXML');
 
 const STATE_BANK_URL =
-  'https://e.statebank.mn/acntstatement/statement.asmx?op=AcntStatement';
+  'https://e.statebank.mn/acntstatement/statement.asmx';
 
 function extractTagValues(xml, tagName) {
   const safeTag = tagName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -68,8 +68,6 @@ module.exports = async function stateBankCorporate(corporate) {
     const status = error?.response?.status;
     const statusText = error?.response?.statusText;
     const responseData = error?.response?.data;
-    console.log('[DEBUG] raw response body:', responseData);
-    console.log('[DEBUG] error message:', error.message);
     const body =
       typeof responseData === 'string' ? responseData : JSON.stringify(responseData || {});
 

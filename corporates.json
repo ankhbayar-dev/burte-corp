@@ -5,7 +5,16 @@
     "bank": "STATE_BANK",
     "loginName": "gegeenten",
     "loginPass": "b3Bp",
-    "startDate": "2026-03-31 00:00",
+    "startDate": "2026-03-31",
     "journalNo": "958690375360"
+  },
+    {
+    "id": "state-2",
+    "enabled": true,
+    "bank": "STATE_BANK",
+    "loginName": "olimpkhotkhonsuh ",
+    "loginPass": "MA==",
+    "startDate": "2026-04-03",
+    "journalNo": "958991246158"
   }
 ]
