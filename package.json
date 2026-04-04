@@ -1,0 +1,13 @@
+{
+  "name": "burte-corporate",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.8.2",
+    "dotenv": "^16.4.7"
+  }
+}
