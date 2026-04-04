@@ -91,6 +91,7 @@ module.exports = async function stateBankCorporate(corporate) {
     throw new Error(message || 'State bank request failed');
   }
       const xml = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
+      console.log(xml);
   const errCode = extractTagValues(xml, 'ErrCode')[0] || null;
   const errDesc = extractTagValues(xml, 'ErrDesc')[0] || null;
 
