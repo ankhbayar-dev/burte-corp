@@ -54,6 +54,7 @@ module.exports = async function stateBankCorporate(corporate) {
 
   let response;
   try {
+    console.log(STATE_BANK_URL);
     response = await axios.post(STATE_BANK_URL, postData, {
       headers: { 'Content-Type': 'text/xml' },
       timeout: 20000,
