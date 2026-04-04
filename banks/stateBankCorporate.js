@@ -60,6 +60,35 @@ module.exports = async function stateBankCorporate(corporate) {
       headers: { 'Content-Type': 'text/xml' },
       timeout: 20000,
     });
+console.log(response.data)
+
+  } catch (error) {
+    const status = error?.response?.status;
+    const statusText = error?.response?.statusText;
+    const responseData = error?.response?.data;
+    const body =
+      typeof responseData === 'string' ? responseData : JSON.stringify(responseData || {});
+
+    const errCode =
+      extractTagValues(body, 'ErrCode')[0] || extractTagValues(body, 'faultcode')[0] || null;
+    const errDesc =
+      extractTagValues(body, 'ErrDesc')[0] ||
+      extractTagValues(body, 'faultstring')[0] ||
+      null;
+
+    const message = [
+      status ? `status=${status}${statusText ? ` ${statusText}` : ''}` : null,
+      errCode ? `bankErrCode=${compactText(errCode)}` : null,
+      errDesc ? `bankErrDesc=${compactText(errDesc)}` : null,
+      `response=${sliceText(body)}`,
+    ]
+      .filter(Boolean)
+      .join(' | ');
+
+      console.log(message);
+
+    throw new Error(message || 'State bank request failed');
+  }
       const xml = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
   const errCode = extractTagValues(xml, 'ErrCode')[0] || null;
   const errDesc = extractTagValues(xml, 'ErrDesc')[0] || null;
@@ -97,7 +126,6 @@ module.exports = async function stateBankCorporate(corporate) {
       txnDate: txnDates[i] || null,
     });
   }
-
   return {
     transactions,
     meta: {
@@ -105,33 +133,4 @@ module.exports = async function stateBankCorporate(corporate) {
       errDesc,
     },
   };
-  } catch (error) {
-    const status = error?.response?.status;
-    const statusText = error?.response?.statusText;
-    const responseData = error?.response?.data;
-    const body =
-      typeof responseData === 'string' ? responseData : JSON.stringify(responseData || {});
-
-    const errCode =
-      extractTagValues(body, 'ErrCode')[0] || extractTagValues(body, 'faultcode')[0] || null;
-    const errDesc =
-      extractTagValues(body, 'ErrDesc')[0] ||
-      extractTagValues(body, 'faultstring')[0] ||
-      null;
-
-    const message = [
-      status ? `status=${status}${statusText ? ` ${statusText}` : ''}` : null,
-      errCode ? `bankErrCode=${compactText(errCode)}` : null,
-      errDesc ? `bankErrDesc=${compactText(errDesc)}` : null,
-      `response=${sliceText(body)}`,
-    ]
-      .filter(Boolean)
-      .join(' | ');
-
-      console.log(message);
-
-    throw new Error(message || 'State bank request failed');
-  }
-
-
 };
