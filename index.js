@@ -1,12 +1,13 @@
 require('dotenv').config();
 
-const corporates = require('./corporates.json');
 const bankRunners = require('./banks');
 const logger = require('./utils/logger');
 const transactionStore = require('./utils/transactionStore');
+const { syncToburteGraph } = require('./utils/burteGraphSync');
+const { fetchCorporateAccounts } = require('./utils/burteGraphConfig');
 
-const CHECK_INTERVAL_MS = Number(process.env.CHECK_INTERVAL_MS || 5 * 60 * 1000);
-const LOG_TRANSACTIONS = String(process.env.LOG_TRANSACTIONS || 'false') === 'true';
+const CHECK_INTERVAL_MS  = Number(process.env.CHECK_INTERVAL_MS || 5 * 60 * 1000);
+const LOG_TRANSACTIONS   = String(process.env.LOG_TRANSACTIONS || 'false') === 'true';
 let isRunning = false;
 
 function summarizeDirections(transactions) {
@@ -49,6 +50,19 @@ async function checkCorporate(corporate) {
       logger.info(`[TX] ${corporate.id} | ${JSON.stringify(tx)}`);
     }
   }
+
+  // burteGraph-д sync хийнэ
+  try {
+    const syncResult = await syncToburteGraph({
+      corporateAccountId: corporate.corporateAccountId,
+      transactions: result.transactions,
+    });
+    logger.info(
+      `[SYNC] ${corporate.id} -> burteGraph | imported=${syncResult.importedCount} | skipped=${syncResult.skippedCount} | status=${syncResult.status} | syncLogId=${syncResult.syncLogId}`
+    );
+  } catch (syncErr) {
+    logger.error(`[SYNC] ${corporate.id} -> burteGraph алдаа: ${syncErr.message}`);
+  }
 }
 
 async function runAll() {
@@ -61,11 +75,22 @@ async function runAll() {
   logger.info(`[START] ${new Date().toISOString()}`);
 
   try {
-    for (const corporate of corporates) {
-      if (corporate.enabled === false) {
-        continue;
-      }
+    // burteGraph-аас тохиргоог татна
+    let corporates;
+    try {
+      corporates = await fetchCorporateAccounts();
+      logger.info(`[CONFIG] burteGraph-аас ${corporates.length} corporate account татлаа.`);
+    } catch (configErr) {
+      logger.error(`[CONFIG] burteGraph-аас config татахад алдаа гарлаа: ${configErr.message}`);
+      return;
+    }
 
+    if (corporates.length === 0) {
+      logger.info('[CONFIG] Идэвхтэй corporate account байхгүй байна.');
+      return;
+    }
+
+    for (const corporate of corporates) {
       try {
         await checkCorporate(corporate);
       } catch (error) {

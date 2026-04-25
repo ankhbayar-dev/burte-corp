@@ -1,0 +1,86 @@
+/**
+ * burteGraphConfig.js
+ *
+ * burteGraph-аас идэвхтэй CorporateAccount тохиргоог татна.
+ * JWT token-аар нэвтэрнэ (burteGraphAuth.js).
+ */
+
+const axios = require('axios');
+const { getAuthHeader, clearToken } = require('./burteGraphAuth');
+
+const BURTE_GRAPH_URL = process.env.BURTE_GRAPH_URL || 'http://localhost:4000/graphql';
+
+const CORPORATE_ACCOUNTS_QUERY = `
+  query GetAllCorporateAccounts {
+    organizations {
+      id
+      corporateAccounts {
+        id
+        organizationId
+        bank
+        loginName
+        loginPass
+        journalNo
+        startDate
+        bankAccountId
+        enabled
+      }
+    }
+  }
+`;
+
+/**
+ * burteGraph-аас бүх идэвхтэй CorporateAccount-уудыг татна.
+ *
+ * @returns {Promise<Array>} — index.js-д ашиглах corporates массив
+ */
+async function fetchCorporateAccounts() {
+  const authHeader = await getAuthHeader();
+
+  let response;
+  try {
+    console.log(BURTE_GRAPH_URL);
+    response = await axios.post(
+      BURTE_GRAPH_URL,
+      { query: CORPORATE_ACCOUNTS_QUERY },
+      { headers: { 'Content-Type': 'application/json', ...authHeader }, timeout: 15000 }
+    );
+    console.log(response.data);
+  } catch (err) {
+    // Сүлжээний алдаа
+    throw new Error(`burteGraph холболтын алдаа: ${err.message}`);
+  }
+
+  if (response.data.errors && response.data.errors.length > 0) {
+    const msg = response.data.errors.map((e) => e.message).join('; ');
+    // Нэвтрэлтийн алдаа бол кэш цэвэрлэж дахин оролдуулна
+    if (msg.includes('Нэвтрэх') || msg.includes('auth') || msg.includes('token')) {
+      clearToken();
+    }
+    throw new Error(`burteGraph GraphQL алдаа: ${msg}`);
+  }
+
+  const organizations = response.data.data?.organizations || [];
+  const corporates = [];
+  console.log(organizations);
+
+  for (const org of organizations) {
+    for (const ca of org.corporateAccounts || []) {
+      if (!ca.enabled) continue;
+      corporates.push({
+        corporateAccountId: ca.id,
+        id:        ca.id,
+        bank:      ca.bank,
+        loginName: ca.loginName,
+        loginPass: ca.loginPass,
+        journalNo: ca.journalNo,
+        startDate: ca.startDate,
+        enabled:   ca.enabled,
+      });
+    }
+  }
+
+  return corporates;
+}
+
+module.exports = { fetchCorporateAccounts };

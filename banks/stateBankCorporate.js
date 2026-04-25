@@ -1,6 +1,9 @@
 const axios = require('axios');
 const statementPostDataXML = require('../utils/statementPostDataXML');
 
+// 'ORLOGO' | 'ZARLAGA' | 'BOTH'
+const FETCH_MODE = 'ZARLAGA';
+
 const STATE_BANK_URL =
   'https://e.statebank.mn/acntstatement/statement.asmx';
 
@@ -58,7 +61,8 @@ module.exports = async function stateBankCorporate(corporate) {
     console.log(STATE_BANK_URL);
     response = await axios.post(STATE_BANK_URL, postData, {
       headers: {
-        'Content-Type': 'text/xml',
+        'Content-Type': 'text/xml; charset=utf-8',
+        'SOAPAction': '"http://tempuri.org/AcntStatement"',
       },
     });
 
@@ -91,7 +95,7 @@ module.exports = async function stateBankCorporate(corporate) {
     throw new Error(message || 'State bank request failed');
   }
       const xml = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
-      console.log(xml);
+
   const errCode = extractTagValues(xml, 'ErrCode')[0] || null;
   const errDesc = extractTagValues(xml, 'ErrDesc')[0] || null;
 
@@ -128,8 +132,13 @@ module.exports = async function stateBankCorporate(corporate) {
       txnDate: txnDates[i] || null,
     });
   }
+  const filtered =
+    FETCH_MODE === 'BOTH'
+      ? transactions
+      : transactions.filter((t) => t.direction === FETCH_MODE);
+
   return {
-    transactions,
+    transactions: filtered,
     meta: {
       errCode,
       errDesc,
