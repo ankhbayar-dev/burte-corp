@@ -31,3 +31,19 @@ npm start
 - Easy to add new bank:
   - add new file in `banks/`
   - register in `banks/index.js`
+
+
+# Эхлүүлэх
+pm2 start ecosystem.config.js
+
+# Зогсоох
+pm2 stop burte-corporate
+
+# Дахин эхлүүлэх
+pm2 restart burte-corporate
+
+# Лог харах
+pm2 logs burte-corporate
+
+# Статус
+pm2 status
