@@ -56,6 +56,7 @@ async function checkCorporate(corporate) {
     const syncResult = await syncToburteGraph({
       corporateAccountId: corporate.corporateAccountId,
       transactions: result.transactions,
+      lastJournalNo: meta.nextJournalNo,
     });
     logger.info(
       `[SYNC] ${corporate.id} -> burteGraph | imported=${syncResult.importedCount} | skipped=${syncResult.skippedCount} | status=${syncResult.status} | syncLogId=${syncResult.syncLogId}`

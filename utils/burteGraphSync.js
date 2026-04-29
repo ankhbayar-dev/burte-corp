@@ -29,10 +29,12 @@ function computeSyncHash(corporateAccountId, txnDate, amount, direction, txnDesc
 const SYNC_MUTATION = `
   mutation SyncCorporateTransactions(
     $corporateAccountId: String!
+    $lastJournalNo: String
     $rows: [CorporateTransactionRowInput!]!
   ) {
     syncCorporateTransactions(
       corporateAccountId: $corporateAccountId
+      lastJournalNo: $lastJournalNo
       rows: $rows
     ) {
       syncLogId
@@ -44,7 +46,7 @@ const SYNC_MUTATION = `
   }
 `;
 
-async function syncToburteGraph({ corporateAccountId, transactions }) {
+async function syncToburteGraph({ corporateAccountId, transactions, lastJournalNo }) {
   if (!corporateAccountId) throw new Error('corporateAccountId тохируулаагүй байна.');
 
   const rows = transactions.map((tx) => ({
@@ -65,7 +67,7 @@ async function syncToburteGraph({ corporateAccountId, transactions }) {
   try {
     response = await axios.post(
       BURTE_GRAPH_URL,
-      { query: SYNC_MUTATION, variables: { corporateAccountId, rows } },
+      { query: SYNC_MUTATION, variables: { corporateAccountId, lastJournalNo, rows } },
       { headers: { 'Content-Type': 'application/json', ...authHeader }, timeout: 30000 }
     );
   } catch (err) {

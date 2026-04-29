@@ -1,9 +1,6 @@
 const axios = require('axios');
 const statementPostDataXML = require('../utils/statementPostDataXML');
 
-// 'ORLOGO' | 'ZARLAGA' | 'BOTH'
-const FETCH_MODE = 'ZARLAGA';
-
 const STATE_BANK_URL =
   'https://e.statebank.mn/acntstatement/statement.asmx';
 
@@ -41,6 +38,11 @@ function detectDirection(txnType, amount) {
   if (Number(amount) < 0) return 'ZARLAGA';
   if (Number(amount) > 0) return 'ORLOGO';
   return 'UNKNOWN';
+}
+
+function normalizeFetchMode(value) {
+  const mode = String(value || 'ZARLAGA').toUpperCase();
+  return ['ORLOGO', 'ZARLAGA', 'BOTH'].includes(mode) ? mode : 'ZARLAGA';
 }
 
 module.exports = async function stateBankCorporate(corporate) {
@@ -117,8 +119,13 @@ module.exports = async function stateBankCorporate(corporate) {
   );
 
   const transactions = [];
+  let nextJournalNo = Number(corporate.journalNo) || 0;
   for (let i = 0; i < maxLen; i += 1) {
     const amount = Number(String(amounts[i] || '0').replace(/,/g, '')) || 0;
+    const numericJournalNo = Number(journalNos[i]);
+    if (Number.isFinite(numericJournalNo) && numericJournalNo > nextJournalNo) {
+      nextJournalNo = numericJournalNo;
+    }
 
     transactions.push({
       acntNo: acntNos[i] || null,
@@ -132,16 +139,18 @@ module.exports = async function stateBankCorporate(corporate) {
       txnDate: txnDates[i] || null,
     });
   }
+  const fetchMode = normalizeFetchMode(corporate.fetchMode);
   const filtered =
-    FETCH_MODE === 'BOTH'
+    fetchMode === 'BOTH'
       ? transactions
-      : transactions.filter((t) => t.direction === FETCH_MODE);
+      : transactions.filter((t) => t.direction === fetchMode);
 
   return {
     transactions: filtered,
     meta: {
       errCode,
       errDesc,
+      nextJournalNo: nextJournalNo > 0 ? String(nextJournalNo) : null,
     },
   };
 };

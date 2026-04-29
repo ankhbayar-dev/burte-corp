@@ -11,20 +11,19 @@ const { getAuthHeader, clearToken } = require('./burteGraphAuth');
 const BURTE_GRAPH_URL = process.env.BURTE_GRAPH_URL || 'http://localhost:4000/graphql';
 
 const CORPORATE_ACCOUNTS_QUERY = `
-  query GetAllCorporateAccounts {
-    organizations {
+  query GetEnabledCorporateAccounts {
+    enabledCorporateAccounts {
       id
-      corporateAccounts {
-        id
-        organizationId
-        bank
-        loginName
-        loginPass
-        journalNo
-        startDate
-        bankAccountId
-        enabled
-      }
+      organizationId
+      bank
+      loginName
+      loginPass
+      accountNumber
+      journalNo
+      startDate
+      fetchMode
+      bankAccountId
+      enabled
     }
   }
 `;
@@ -60,27 +59,20 @@ async function fetchCorporateAccounts() {
     throw new Error(`burteGraph GraphQL алдаа: ${msg}`);
   }
 
-  const organizations = response.data.data?.organizations || [];
-  const corporates = [];
-  console.log(organizations);
+  const corporateAccounts = response.data.data?.enabledCorporateAccounts || [];
 
-  for (const org of organizations) {
-    for (const ca of org.corporateAccounts || []) {
-      if (!ca.enabled) continue;
-      corporates.push({
-        corporateAccountId: ca.id,
-        id:        ca.id,
-        bank:      ca.bank,
-        loginName: ca.loginName,
-        loginPass: ca.loginPass,
-        journalNo: ca.journalNo,
-        startDate: ca.startDate,
-        enabled:   ca.enabled,
-      });
-    }
-  }
-
-  return corporates;
+  return corporateAccounts.map((ca) => ({
+    corporateAccountId: ca.id,
+    id: ca.id,
+    bank: ca.bank,
+    loginName: ca.loginName,
+    loginPass: ca.loginPass,
+    accountNumber: ca.accountNumber,
+    journalNo: ca.journalNo,
+    startDate: ca.startDate,
+    fetchMode: ca.fetchMode || 'ZARLAGA',
+    enabled: ca.enabled,
+  }));
 }
 
 module.exports = { fetchCorporateAccounts };
