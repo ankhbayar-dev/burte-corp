@@ -62,7 +62,7 @@ async function syncToburteGraph({ corporateAccountId, transactions, lastJournalN
   }));
 
   const authHeader = await getAuthHeader();
-
+console.log(authHeader);
   let response;
   try {
     response = await axios.post(
