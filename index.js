@@ -10,6 +10,23 @@ const CHECK_INTERVAL_MS  = Number(process.env.CHECK_INTERVAL_MS || 5 * 60 * 1000
 const LOG_TRANSACTIONS   = String(process.env.LOG_TRANSACTIONS || 'false') === 'true';
 let isRunning = false;
 
+function compactErrorData(data) {
+  if (!data) return '';
+  const text = typeof data === 'string' ? data : JSON.stringify(data);
+  return text.replace(/\s+/g, ' ').trim().slice(0, 800);
+}
+
+function formatError(error) {
+  const status = error?.response?.status;
+  const statusText = error?.response?.statusText;
+  const responseData = compactErrorData(error?.response?.data);
+  return [
+    error?.message,
+    status ? `status=${status}${statusText ? ` ${statusText}` : ''}` : null,
+    responseData ? `response=${responseData}` : null,
+  ].filter(Boolean).join(' | ');
+}
+
 function summarizeDirections(transactions) {
   const summary = { ORLOGO: 0, ZARLAGA: 0, UNKNOWN: 0 };
   for (const tx of transactions) {
@@ -95,7 +112,9 @@ async function runAll() {
       try {
         await checkCorporate(corporate);
       } catch (error) {
-        logger.error(`[ERROR] ${corporate.id} -> ${error.message}`);
+        logger.error(
+          `[ERROR] ${corporate.id} | bank=${corporate.bank} | account=${corporate.accountNumber || '-'} | cursor=${corporate.journalNo || '-'} -> ${formatError(error)}`
+        );
       }
     }
   } finally {
